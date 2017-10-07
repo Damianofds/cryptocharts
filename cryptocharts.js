@@ -16,16 +16,16 @@ function transformDataFromCryptocompare2Cryptocharts(rawData){
     for(i=0; i<rawData.length-1;i++){
         rawEl = rawData.pop();
         var cleanEl = {
-            x: new Date(rawEl.time*1000),
-            y: rawEl.high
+            time: new Date(rawEl.time*1000),
+            price: rawEl.high
         };
         cleanData.push(cleanEl);
     }
     return cleanData;
 }
 
-function drawChart(targetName, lineData){
-    var vis = d3.select('#' + targetName),
+function drawChart(targetName, lineData, annotations){
+    var svg = d3.select('#' + targetName),
         WIDTH = 1000,
         HEIGHT = 500,
         MARGINS = {
@@ -34,50 +34,66 @@ function drawChart(targetName, lineData){
           bottom: 20,
           left: 50
         },
-    xRange = d3.time.scale().range([MARGINS.left, WIDTH - MARGINS.right]).domain([d3.min(lineData, function(d) {
-      return d.x;
+    xRange = d3.scaleTime().range([MARGINS.left, WIDTH - MARGINS.right]).domain([d3.min(lineData, function(d) {
+      return d.time;
     }), d3.max(lineData, function(d) {
-      return d.x;
+      return d.time;
     })]),
-    yRange = d3.scale.linear().range([HEIGHT - MARGINS.top, MARGINS.bottom]).domain([d3.min(lineData, function(d) {
-      return d.y;
+    yRange = d3.scaleLinear().range([HEIGHT - MARGINS.top, MARGINS.bottom]).domain([d3.min(lineData, function(d) {
+      return d.price;
     }), d3.max(lineData, function(d) {
-      return d.y;
+      return d.price;
     })]),
-    xAxis = d3.svg.axis()
-      .scale(xRange)
-      .tickSize(5)
-      .tickSubdivide(true),
-    yAxis = d3.svg.axis()
-      .scale(yRange)
-      .tickSize(5)
-      .orient('left')
-      .tickSubdivide(true);
+    xAxis = d3.axisBottom(xRange);
+    yAxis = d3.axisLeft(yRange);
 
-    vis.append('svg:g')
+    svg.append('svg:g')
       .attr('class', 'x axis')
       .attr('transform', 'translate(0,' + (HEIGHT - MARGINS.bottom) + ')')
       .call(xAxis);
 
-    vis.append('svg:g')
+    svg.append('svg:g')
       .attr('class', 'y axis')
       .attr('transform', 'translate(' + (MARGINS.left) + ',0)')
       .call(yAxis);
     
-    var lineFunc = d3.svg.line()
+    var lineFunc = d3.line()
       .x(function(d) {
-        return xRange(d.x);
+        return xRange(d.time);
       })
       .y(function(d) {
-        return yRange(d.y);
-      })
-      .interpolate('linear');
+        return yRange(d.price);
+      });
     
-    vis.append('svg:path')
+    svg.append('svg:path')
       .attr('d', lineFunc(lineData))
       .attr('stroke', 'blue')
       .attr('stroke-width', 2)
       .attr('fill', 'none');
+      
+    //Add annotations
+    labels = annotations;
+    var timeFormat = d3.timeFormat("%d-%b-%y");
+    var parseTime = d3.timeParse("%d-%b-%y");
+
+    window.makeAnnotations = d3.annotation().annotations(labels).type(d3.annotationCalloutCircle)
+        .accessors({ 
+            x: function x(d) {
+                return xRange(parseTime(d.time));
+            },
+            y: function y(d) {
+                return yRange(d.price);
+            }
+        }).accessorsInverse({
+            time: function time(d) {
+                return timeFormat(xRange.invert(d.x));
+            },
+            price: function price(d) {
+                return yRange.invert(d.y);
+            }
+        });
+    svg.append("g").attr("class", "annotation-test").call(makeAnnotations);
+    svg.selectAll("g.annotation-connector, g.annotation-note");
 }
 
 function buildChart(targetName, endpointUri){
@@ -89,11 +105,33 @@ function buildChart(targetName, endpointUri){
             var krakenData = resultData;
             lineData = transformDataFromCryptocompare2Cryptocharts(krakenData.Data);
             $("#" + targetName).empty();
-            drawChart(targetName, lineData);
+            drawChart(targetName, lineData, getAnnotations());
         },
         error : function(jqXHR, textStatus, errorThrown) {
             console.log("problem dowloading data");
         },
         timeout: 120000
+    });
+}
+
+function getAnnotations(){
+    return [{
+        data: { time: "26-Aug-17", price: 3000 },
+        dy: 37,
+        dx: -142
+    }, {
+        data: { time: "26-Jul-17", price: 3000 },
+        dy: -137,
+        dx: 0,
+        note: { align: "middle" }
+    }, {
+        data: { time: "18-Sep-17", price: 3000 },
+        dy: 37,
+        dx: 42
+    }].map(function (l) {
+        l.note = Object.assign({}, l.note, { title: "Price: " + l.data.price,
+          label: "" + l.data.time });
+        l.subject = { radius: 4 };
+        return l;
     });
 }
