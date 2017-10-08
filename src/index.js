@@ -1,3 +1,19 @@
+import * as d3 from "d3";
+import * as d3_annotation from "d3-svg-annotation";
+var $ = require("jquery");
+require('file-loader?name=[name].[ext]!./index.html');
+
+$(function() {
+    $( "#cryptoc_list" ).change(function() {                                           
+        var str = "";
+        $( "#cryptoc_list option:selected" ).each(function() {
+            str += $(this).val();
+        });
+        var endpoint_uri = buildEndpointUri(str);
+        buildChart("visualisation", endpoint_uri);
+    });
+});
+
 
 function buildEndpointUri(cryptoc){
     var BASEURL = "https://min-api.cryptocompare.com";
@@ -13,8 +29,8 @@ function buildEndpointUri(cryptoc){
 
 function transformDataFromCryptocompare2Cryptocharts(rawData){
     var cleanData = [];
-    for(i=0; i<rawData.length-1;i++){
-        rawEl = rawData.pop();
+    for(var i=0; i<rawData.length-1;i++){
+        var rawEl = rawData.pop();
         var cleanEl = {
             time: new Date(rawEl.time*1000),
             price: rawEl.high
@@ -33,19 +49,19 @@ function drawChart(targetName, lineData, annotations){
           right: 20,
           bottom: 20,
           left: 50
-        },
-    xRange = d3.scaleTime().range([MARGINS.left, WIDTH - MARGINS.right]).domain([d3.min(lineData, function(d) {
-      return d.time;
+        };
+    var xRange = d3.scaleTime().range([MARGINS.left, WIDTH - MARGINS.right]).domain([d3.min(lineData, function(d) {
+        return d.time;
     }), d3.max(lineData, function(d) {
-      return d.time;
-    })]),
-    yRange = d3.scaleLinear().range([HEIGHT - MARGINS.top, MARGINS.bottom]).domain([d3.min(lineData, function(d) {
-      return d.price;
+            return d.time;
+    })]);
+    var yRange = d3.scaleLinear().range([HEIGHT - MARGINS.top, MARGINS.bottom]).domain([d3.min(lineData, function(d) {
+        return d.price;
     }), d3.max(lineData, function(d) {
-      return d.price;
-    })]),
-    xAxis = d3.axisBottom(xRange);
-    yAxis = d3.axisLeft(yRange);
+        return d.price;
+    })]);
+    var xAxis = d3.axisBottom(xRange);
+    var yAxis = d3.axisLeft(yRange);
 
     svg.append('svg:g')
       .attr('class', 'x axis')
@@ -72,11 +88,11 @@ function drawChart(targetName, lineData, annotations){
       .attr('fill', 'none');
       
     //Add annotations
-    labels = annotations;
+    var labels = annotations;
     var timeFormat = d3.timeFormat("%d-%b-%y");
     var parseTime = d3.timeParse("%d-%b-%y");
 
-    window.makeAnnotations = d3.annotation().annotations(labels).type(d3.annotationCalloutCircle)
+    window.makeAnnotations = d3_annotation.annotation().annotations(labels).type(d3_annotation.annotationCalloutCircle)
         .accessors({ 
             x: function x(d) {
                 return xRange(parseTime(d.time));
@@ -103,7 +119,7 @@ function buildChart(targetName, endpointUri){
         contentType: 'application/json; charset=utf-8',
         success: function(resultData) {
             var krakenData = resultData;
-            lineData = transformDataFromCryptocompare2Cryptocharts(krakenData.Data);
+            var lineData = transformDataFromCryptocompare2Cryptocharts(krakenData.Data);
             $("#" + targetName).empty();
             drawChart(targetName, lineData, getAnnotations());
         },

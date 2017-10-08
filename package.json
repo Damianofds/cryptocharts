@@ -1,0 +1,22 @@
+{
+  "name": "webpack-demo",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "webpack"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "file-loader": "^1.1.5",
+    "webpack": "^3.6.0"
+  },
+  "dependencies": {
+    "d3": "^4.11.0",
+    "d3-svg-annotation": "^2.0.0",
+    "jquery": "^3.2.1"
+  }
+}

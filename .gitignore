@@ -57,3 +57,18 @@ typings/
 # dotenv environment variables file
 .env
 
+# webpack gitignore from https://github.com/webpack/webpack/blob/master/.gitignore
+/node_modules
+/test/js
+/test/browsertest/js
+/test/fixtures/temp-cache-fixture
+/benchmark/js
+/benchmark/fixtures
+/examples/**/js
+/coverage
+.DS_Store
+*.log
+.idea
+.vscode
+
+/dist
